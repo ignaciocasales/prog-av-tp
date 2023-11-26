@@ -3,7 +3,7 @@ import multiprocessing
 import sys
 import time
 
-
+# Estructura de un pedido (order)
 class Order:
     def __init__(self, order_id, items):
         self.order_id = order_id
@@ -12,7 +12,7 @@ class Order:
 
 def process_order(order, employee_id):
     logging.info(f"Procesando pedido {order.order_id} con {len(order.items)} artículos...")
-    # Simular el tiempo de procesamiento de un pedido.
+    # Simular el tiempo de procesamiento de un pedido. Cada artículo toma 1 segundo.
     time_to_process = len(order.items)
     time.sleep(time_to_process)
     logging.info(f"Pedido {order.order_id} completado en {time_to_process} segundos por el empleado {employee_id}.")
