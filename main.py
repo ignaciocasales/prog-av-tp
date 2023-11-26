@@ -1,4 +1,6 @@
+import logging
 import multiprocessing
+import sys
 import time
 
 
@@ -9,11 +11,11 @@ class Order:
 
 
 def process_order(order, employee_id):
-    print(f"Procesando pedido {order.order_id} con {len(order.items)} artículos...")
+    logging.info(f"Procesando pedido {order.order_id} con {len(order.items)} artículos...")
     # Simular el tiempo de procesamiento de un pedido.
     time_to_process = len(order.items)
     time.sleep(time_to_process)
-    print(f"Pedido {order.order_id} completado en {time_to_process} segundos por el empleado {employee_id}.")
+    logging.info(f"Pedido {order.order_id} completado en {time_to_process} segundos por el empleado {employee_id}.")
 
 
 def work(orders_queue, employee_id):
@@ -28,6 +30,15 @@ def work(orders_queue, employee_id):
 
 if __name__ == "__main__":
     try:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            handlers=[
+                logging.StreamHandler(sys.stdout)
+            ],
+        )
+
         start_time = time.time()
 
         # Número de pedidos
@@ -55,6 +66,6 @@ if __name__ == "__main__":
         orders_queue.join()
 
         total_time = time.time() - start_time
-        print(f"Todos los pedidos han sido procesados en {total_time} segundos.")
+        logging.info(f"Todos los pedidos han sido procesados en {total_time} segundos.")
     except KeyboardInterrupt:
-        print("El programa ha sido detenido por el usuario.")
+        logging.info("El programa ha sido detenido por el usuario.")
