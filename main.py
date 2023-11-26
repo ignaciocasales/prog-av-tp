@@ -28,7 +28,11 @@ def work(orders_queue, employee_id):
 
 if __name__ == "__main__":
     try:
+        start_time = time.time()
+
+        # Número de pedidos
         orders_number = 10
+
         # Número de empleados (hilos de procesamiento de los pedidos)
         employees_number = 2
 
@@ -50,6 +54,7 @@ if __name__ == "__main__":
 
         orders_queue.join()
 
-        print("Todos los pedidos han sido procesados.")
+        total_time = time.time() - start_time
+        print(f"Todos los pedidos han sido procesados en {total_time} segundos.")
     except KeyboardInterrupt:
         print("El programa ha sido detenido por el usuario.")
