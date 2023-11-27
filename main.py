@@ -51,9 +51,11 @@ if __name__ == "__main__":
 
         # Número de pedidos
         orders_number = args.orders_number
+        logging.info(f"Se crearán {orders_number} pedidos.")
 
         # Número de artículos por pedido
         items_number = args.items_number
+        logging.info(f"Cada pedido tendrá {items_number} artículos.")
 
         # Número de empleados (hilos de procesamiento de los pedidos)
         employees_number = args.employees_number if args.employees_number else multiprocessing.cpu_count()
