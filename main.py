@@ -30,9 +30,9 @@ def work(orders_queue, employee_id):
         orders_queue.task_done()
 
 
-# TODO: Hacer el código funcional.
 if __name__ == "__main__":
     try:
+        # Configuración del logger.
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s %(levelname)s %(message)s',
@@ -42,15 +42,18 @@ if __name__ == "__main__":
             ],
         )
 
+        # Configuración de los argumentos de la línea de comandos.
         parser = ArgumentParser()
-        parser.add_argument("-e", "--employees", dest="employees_number", type=int,)
+        parser.add_argument("-e", "--employees", dest="employees_number", type=int, )
+        parser.add_argument("-o", "--orders", dest="orders_number", type=int, default=10)
+        parser.add_argument("-i", "--items", dest="items_number", type=int, default=3)
         args = parser.parse_args()
 
-        start_time = time.time()
-
-        # TODO: Tomar el número de pedidos y empleados desde la línea de comandos y tener valores por defecto.
         # Número de pedidos
-        orders_number = 10
+        orders_number = args.orders_number
+
+        # Número de artículos por pedido
+        items_number = args.items_number
 
         # Número de empleados (hilos de procesamiento de los pedidos)
         employees_number = args.employees_number if args.employees_number else multiprocessing.cpu_count()
@@ -58,20 +61,31 @@ if __name__ == "__main__":
 
         orders_queue = multiprocessing.JoinableQueue()
 
-        for i in range(orders_number):
-            order = Order(i, ["articulo1", "articulo2", "articulo3"])
+        # El número de artículos por pedidos es preferible que sea fijo para poder comparar los tiempos de
+        # procesamiento de los pedidos.
+        def build_items(n): return ["articulo" + str(item_id) for item_id in range(n)]
 
-            orders_queue.put(order)
+        def build_order(order_id, items): return Order(order_id, items)
 
-        for i in range(employees_number):
-            process = multiprocessing.Process(
-                target=work,
-                args=(orders_queue, i),
-                daemon=True
-            )
+        # Crear los pedidos.
+        orders = map(lambda order_id: build_order(order_id, build_items(items_number)), range(orders_number))
 
-            process.start()
+        # Agregar los pedidos a la cola.
+        [orders_queue.put(order) for order in orders]
 
+        # Crear los procesos.
+        processes = map(lambda employee_id: multiprocessing.Process(
+            target=work,
+            args=(orders_queue, employee_id),
+            daemon=True
+        ), range(employees_number))
+
+        start_time = time.time()
+
+        # Iniciar los procesos.
+        [process.start() for process in processes]
+
+        # Esperar a que todos los pedidos sean procesados.
         orders_queue.join()
 
         total_time = time.time() - start_time
