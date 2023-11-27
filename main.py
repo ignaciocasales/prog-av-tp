@@ -3,6 +3,7 @@ import multiprocessing
 import sys
 import time
 
+
 # Estructura de un pedido (order)
 class Order:
     def __init__(self, order_id, items):
@@ -28,6 +29,7 @@ def work(orders_queue, employee_id):
         orders_queue.task_done()
 
 
+# TODO: Hacer el código funcional.
 if __name__ == "__main__":
     try:
         logging.basicConfig(
@@ -41,9 +43,11 @@ if __name__ == "__main__":
 
         start_time = time.time()
 
+        # TODO: Tomar el número de pedidos y empleados desde la línea de comandos y tener valores por defecto.
         # Número de pedidos
         orders_number = 10
 
+        # TODO: Tomar el número de empleados (hilos) desde la línea de comandos y tener valores por defecto.
         # Número de empleados (hilos de procesamiento de los pedidos)
         employees_number = 2
 
