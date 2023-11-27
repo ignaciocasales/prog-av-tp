@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import sys
 import time
+from argparse import ArgumentParser
 
 
 # Estructura de un pedido (order)
@@ -41,15 +42,19 @@ if __name__ == "__main__":
             ],
         )
 
+        parser = ArgumentParser()
+        parser.add_argument("-e", "--employees", dest="employees_number", type=int,)
+        args = parser.parse_args()
+
         start_time = time.time()
 
         # TODO: Tomar el número de pedidos y empleados desde la línea de comandos y tener valores por defecto.
         # Número de pedidos
         orders_number = 10
 
-        # TODO: Tomar el número de empleados (hilos) desde la línea de comandos y tener valores por defecto.
         # Número de empleados (hilos de procesamiento de los pedidos)
-        employees_number = 2
+        employees_number = args.employees_number if args.employees_number else multiprocessing.cpu_count()
+        logging.info(f"Se utilizarán {employees_number} empleados para procesar los pedidos.")
 
         orders_queue = multiprocessing.JoinableQueue()
 
