@@ -35,7 +35,7 @@ if __name__ == "__main__":
         # Configuración del logger.
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s %(levelname)s %(message)s',
+            format='%(asctime)s %(levelname)s [%(processName)s] [%(threadName)s] %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S',
             handlers=[
                 logging.StreamHandler(sys.stdout)
@@ -77,9 +77,10 @@ if __name__ == "__main__":
 
         # Crear los procesos.
         processes = map(lambda employee_id: multiprocessing.Process(
+            name=f"Empleado {employee_id}",
             target=work,
             args=(orders_queue, employee_id),
-            daemon=True
+            daemon=True,
         ), range(employees_number))
 
         start_time = time.time()
