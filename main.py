@@ -20,14 +20,10 @@ def process_order(order, employee_id):
     logging.info(f"Pedido {order.order_id} completado en {time_to_process} segundos por el empleado {employee_id}.")
 
 
-def work(queue, employee_id):
-    while not queue.empty():
-        process_order(
-            queue.get(),
-            employee_id
-        )
-
-        queue.task_done()
+def work(orders_queue, employee_id):
+    process_order(orders_queue.get(),employee_id)
+    orders_queue.task_done()
+    work(orders_queue,employee_id) if not orders_queue.empty() else None
 
 
 if __name__ == "__main__":
