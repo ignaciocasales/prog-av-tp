@@ -20,14 +20,14 @@ def process_order(order, employee_id):
     logging.info(f"Pedido {order.order_id} completado en {time_to_process} segundos por el empleado {employee_id}.")
 
 
-def work(orders_queue, employee_id):
-    while not orders_queue.empty():
+def work(queue, employee_id):
+    while not queue.empty():
         process_order(
-            orders_queue.get(),
+            queue.get(),
             employee_id
         )
 
-        orders_queue.task_done()
+        queue.task_done()
 
 
 if __name__ == "__main__":
@@ -65,12 +65,12 @@ if __name__ == "__main__":
 
         # El número de artículos por pedidos es preferible que sea fijo para poder comparar los tiempos de
         # procesamiento de los pedidos.
-        def build_items(n): return ["articulo" + str(item_id) for item_id in range(n)]
+        def build_items(items): return ["articulo" + str(item_id) for item_id in range(items)]
 
-        def build_order(order_id, items): return Order(order_id, items)
+        def build_order(order_id, items): return Order(order_id, build_items(items))
 
         # Crear los pedidos.
-        orders = map(lambda order_id: build_order(order_id, build_items(items_number)), range(orders_number))
+        orders = map(lambda order_id: build_order(order_id, items_number), range(orders_number))
 
         # Agregar los pedidos a la cola.
         [orders_queue.put(order) for order in orders]
