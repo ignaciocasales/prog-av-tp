@@ -94,3 +94,5 @@ if __name__ == "__main__":
         logging.info(f"Todos los pedidos han sido procesados en {total_time} segundos.")
     except KeyboardInterrupt:
         logging.info("El programa ha sido detenido por el usuario.")
+    except Exception as e:
+        logging.error(f"Ha ocurrido un error: {e}")
