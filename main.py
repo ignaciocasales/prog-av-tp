@@ -12,7 +12,20 @@ class Order:
         self.items = items
 
 
+def setup_logging():
+    # Configuración del logger.
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s [%(processName)s] [%(threadName)s] %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[
+            logging.StreamHandler(sys.stdout)
+        ],
+    )
+
+
 def replenish(materials_queue, lock):
+    setup_logging()
     while True:
         logging.info(f"Repositor: Verificando stock.")
         lock.acquire()  # Adquirir el Lock antes de verificar el stock
@@ -58,17 +71,14 @@ def work(orders_queue, employee_id, materials_queue, lock):
     work(orders_queue, employee_id, materials_queue, lock) if not orders_queue.empty() else None
 
 
+def run_work_subprocess(oq, eid, mq, lock):
+    setup_logging()
+    work(oq, eid, mq, lock)
+
+
 if __name__ == "__main__":
     try:
-        # Configuración del logger.
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s %(levelname)s [%(processName)s] [%(threadName)s] %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
-            handlers=[
-                logging.StreamHandler(sys.stdout)
-            ],
-        )
+        setup_logging()
 
         # Configuración de los argumentos de la línea de comandos.
         parser = ArgumentParser()
@@ -126,7 +136,7 @@ if __name__ == "__main__":
         # Crear los procesos workers.
         processes = map(lambda employee_id: multiprocessing.Process(
             name=f"Empleado {employee_id}",
-            target=work,
+            target=run_work_subprocess,
             args=(orders_queue, employee_id, materials_queue, lock),
             daemon=True,
         ), range(employees_number))
