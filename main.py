@@ -30,20 +30,25 @@ def replenish_for(i,n,materials_queue):
     i+=1
     replenish_for(i,n,materials_queue) if i<n else None
 
+
+def replenish_while(materials_queue, lock):
+    logging.info(f"Repositor: Verificando stock.")
+    lock.acquire()  # Adquirir el Lock antes de verificar el stock
+    try:
+        if materials_queue.empty():
+            logging.info("Repositor: Reponiendo stock... Ningún trabajador puede ingresar aun.")
+            # Si la cola está vacía, agregar 5 materiales
+            replenish_for(0,5,materials_queue)
+            logging.info(f"Repositor: Stock actual: {materials_queue.qsize()} materiales. Acceso liberado.")
+    finally:
+        lock.release()  # Liberar el Lock después de reponer los materiales
+    time.sleep(5)  # Verificar la cola cada 5 segundos
+    replenish_while(materials_queue, lock)
+
+
 def replenish(materials_queue, lock):
     setup_logging()
-    while True:
-        logging.info(f"Repositor: Verificando stock.")
-        lock.acquire()  # Adquirir el Lock antes de verificar el stock
-        try:
-            if materials_queue.empty():
-                logging.info("Repositor: Reponiendo stock... Ningún trabajador puede ingresar aun.")
-                # Si la cola está vacía, agregar 5 materiales
-                replenish_for(0,5,materials_queue)
-                logging.info(f"Repositor: Stock actual: {materials_queue.qsize()} materiales. Acceso liberado.")
-        finally:
-            lock.release()  # Liberar el Lock después de reponer los materiales
-        time.sleep(5)  # Verificar la cola cada 5 segundos
+    replenish_while(materials_queue, lock)
 
 
 def process_order(order, employee_id, materials_queue, lock):
