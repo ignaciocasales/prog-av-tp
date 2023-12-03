@@ -24,6 +24,12 @@ def setup_logging():
     )
 
 
+def replenish_for(i,n,materials_queue):
+    materials_queue.put(f"Material-{i + 1}")
+    time.sleep(1)
+    i+=1
+    replenish_for(i,n,materials_queue) if i<n else None
+
 def replenish(materials_queue, lock):
     setup_logging()
     while True:
@@ -33,9 +39,7 @@ def replenish(materials_queue, lock):
             if materials_queue.empty():
                 logging.info("Repositor: Reponiendo stock... Ningún trabajador puede ingresar aun.")
                 # Si la cola está vacía, agregar 5 materiales
-                for i in range(5):
-                    materials_queue.put(f"Material-{i + 1}")
-                    time.sleep(1)
+                replenish_for(0,5,materials_queue)
                 logging.info(f"Repositor: Stock actual: {materials_queue.qsize()} materiales. Acceso liberado.")
         finally:
             lock.release()  # Liberar el Lock después de reponer los materiales
