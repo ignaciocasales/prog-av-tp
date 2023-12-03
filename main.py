@@ -12,18 +12,50 @@ class Order:
         self.items = items
 
 
-def process_order(order, employee_id):
-    logging.info(f"Procesando pedido {order.order_id} con {len(order.items)} artículos...")
-    # Simular el tiempo de procesamiento de un pedido. Cada artículo toma 1 segundo.
+def replenish(materials_queue, lock):
+    while True:
+        logging.info(f"Repositor: Verificando stock.")
+        lock.acquire()  # Adquirir el Lock antes de verificar el stock
+        try:
+            if materials_queue.empty():
+                logging.info("Repositor: Reponiendo stock... Ningún trabajador puede ingresar aun.")
+                # Si la cola está vacía, agregar 5 materiales
+                for i in range(5):
+                    materials_queue.put(f"Material-{i + 1}")
+                    time.sleep(1)
+                logging.info(f"Repositor: Stock actual: {materials_queue.qsize()} materiales. Acceso liberado.")
+        finally:
+            lock.release()  # Liberar el Lock después de reponer los materiales
+        time.sleep(5)  # Verificar la cola cada 5 segundos
+
+
+def process_order(order, employee_id, materials_queue, lock):
+    logging.info(f"Empleado {employee_id} recibió el pedido {order.order_id} con {len(order.items)} artículos...")
+
+    for _ in range(len(order.items)):
+        while True:
+            if not materials_queue.empty():
+                lock.acquire()  # Adquirir el Lock antes de tomar el material
+                try:
+                    if not materials_queue.empty():
+                        material = materials_queue.get()
+                        logging.info(
+                            f"Empleado {employee_id} está procesando el material: {material}. Stock restante: {materials_queue.qsize()}")
+                finally:
+                    lock.release()  # Liberar el Lock después de tomar el material
+                    break
+            else:
+                time.sleep(1)  # Esperar un segundo antes de revisar nuevamente la cola
+
     time_to_process = len(order.items)
     time.sleep(time_to_process)
     logging.info(f"Pedido {order.order_id} completado en {time_to_process} segundos por el empleado {employee_id}.")
 
 
-def work(orders_queue, employee_id):
-    process_order(orders_queue.get(),employee_id)
+def work(orders_queue, employee_id, materials_queue, lock):
+    process_order(orders_queue.get(), employee_id, materials_queue, lock)
     orders_queue.task_done()
-    work(orders_queue,employee_id) if not orders_queue.empty() else None
+    work(orders_queue, employee_id, materials_queue, lock) if not orders_queue.empty() else None
 
 
 if __name__ == "__main__":
@@ -59,11 +91,31 @@ if __name__ == "__main__":
 
         orders_queue = multiprocessing.JoinableQueue()
 
+        # Crear el Lock
+        lock = multiprocessing.Lock()
+
+        # Crear la cola para los materiales
+        materials_queue = multiprocessing.Queue()
+
+        # Crear el proceso del productor de materiales
+        producer_process = multiprocessing.Process(
+            target=replenish,
+            args=(materials_queue, lock),
+            name="Productor de Materiales",
+            daemon=True
+        )
+        producer_process.start()
+
+
         # El número de artículos por pedidos es preferible que sea fijo para poder comparar los tiempos de
         # procesamiento de los pedidos.
-        def build_items(items): return ["articulo" + str(item_id) for item_id in range(items)]
+        def build_items(items):
+            return ["articulo" + str(item_id) for item_id in range(items)]
 
-        def build_order(order_id, items): return Order(order_id, build_items(items))
+
+        def build_order(order_id, items):
+            return Order(order_id, build_items(items))
+
 
         # Crear los pedidos.
         orders = map(lambda order_id: build_order(order_id, items_number), range(orders_number))
@@ -71,11 +123,11 @@ if __name__ == "__main__":
         # Agregar los pedidos a la cola.
         [orders_queue.put(order) for order in orders]
 
-        # Crear los procesos.
+        # Crear los procesos workers.
         processes = map(lambda employee_id: multiprocessing.Process(
             name=f"Empleado {employee_id}",
             target=work,
-            args=(orders_queue, employee_id),
+            args=(orders_queue, employee_id, materials_queue, lock),
             daemon=True,
         ), range(employees_number))
 
